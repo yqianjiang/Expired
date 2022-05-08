@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@3"></script>
+</head>
+
+<body>
+  <div id="app">
+    <button @click="addItem">新增项目</button>
+    <button @click="save">保存</button>
+    <div v-for="(item, idx) in items" style="margin: 20px 0">
+      <label>物品名称：<input v-model="item.name"></label>
+      <div>创建日期：{{item.createTime}}</div>
+      <label>保存期限：<input v-model="item.duration"></label>
+      <div>过期日期：{{expireTime[idx]}}</div>
+      <div v-if="((new Date().getTime() - expireTime[idx])/1000/60/60/24) < 1">距离过期还有{{Math.abs((expireTime[idx] - new
+        Date().getTime())/1000/60/60/24).toFixed(2)}}天</div>
+      <div v-else>已经过期{{((new Date().getTime() - expireTime[idx])/1000/60/60/24).toFixed(2)}}天</div>
+    </div>
+  </div>
+</body>
+<script>
+  const { createApp, ref, computed } = Vue
+  createApp({
+    setup() {
+      const items = ref(JSON.parse(localStorage.getItem('itemExpireData')) || [])
+      const addItem = () => {
+        items.value.push({
+          name: '',
+          createTime: new Date(),
+          duration: 1
+        })
+      }
+      const save = () => {
+        localStorage.setItem('itemExpireData', JSON.stringify(items.value))
+      }
+      const expireTime = computed(() => {
+        return items.value.map(item => new Date(new Date(item.createTime).getTime() + item.duration * 24 * 60 * 60 * 1000))
+      })
+
+      return {
+        items,
+        addItem,
+        expireTime,
+        save
+      }
+    }
+  }).mount('#app')
+</script>
+
+</html>
