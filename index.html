@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>食品过期监控</title>
   <script src="https://cdn.jsdelivr.net/npm/vue@3"></script>
 </head>
 
@@ -15,39 +15,56 @@
     <button @click="save">保存</button>
     <div v-for="(item, idx) in items" style="margin: 20px 0">
       <label>物品名称：<input v-model="item.name"></label>
-      <div>创建日期：{{item.createTime}}</div>
+      <div>
+        <label>创建日期：<input v-model="item.createTime"></label>
+      </div>
       <label>保存期限：<input v-model="item.duration"></label>
-      <div>过期日期：{{expireTime[idx]}}</div>
-      <div v-if="((new Date().getTime() - expireTime[idx])/1000/60/60/24) < 1">距离过期还有{{Math.abs((expireTime[idx] - new
-        Date().getTime())/1000/60/60/24).toFixed(2)}}天</div>
-      <div v-else>已经过期{{((new Date().getTime() - expireTime[idx])/1000/60/60/24).toFixed(2)}}天</div>
+      <div :style="isExpired[idx] ? `color: red;` : ''">过期日期：{{expireTime[idx]}}
+        <span> ({{isExpired[idx] ? '已经' : '还有'}}
+          <strong style="font-size: larger;">{{Math.abs((dayjs(expireTime[idx]) - dayjs())/1000/60/60/24).toFixed(1)}}</strong>天)
+        </span>
+      </div>
     </div>
   </div>
+  <script src="https://unpkg.com/dayjs@1.8.21/dayjs.min.js"></script>
 </body>
 <script>
   const { createApp, ref, computed } = Vue
+
   createApp({
     setup() {
       const items = ref(JSON.parse(localStorage.getItem('itemExpireData')) || [])
+
+      const expireTime = computed(() => {
+        return items.value.map(item => dayjs(item.createTime).add(item.duration, 'day').format())
+      })
+      const isExpired = computed(() => {
+        return items.value.map((item, idx) => ((dayjs() - dayjs(expireTime.value[idx])) / 1000 / 60 / 60 / 24) > 0)
+      })
+
       const addItem = () => {
         items.value.push({
           name: '',
-          createTime: new Date(),
+          createTime: dayjs().format(),
           duration: 1
         })
       }
+
       const save = () => {
         localStorage.setItem('itemExpireData', JSON.stringify(items.value))
       }
-      const expireTime = computed(() => {
-        return items.value.map(item => new Date(new Date(item.createTime).getTime() + item.duration * 24 * 60 * 60 * 1000))
-      })
+
+      (function formatCreateTime() {
+        items.value.map(item => item.createTime = dayjs(item.createTime).format())
+      })()
 
       return {
         items,
         addItem,
         expireTime,
-        save
+        isExpired,
+        save,
+        dayjs
       }
     }
   }).mount('#app')
