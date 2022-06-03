@@ -6,23 +6,38 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>食品过期监控</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
   <script src="https://cdn.jsdelivr.net/npm/vue@3"></script>
 </head>
 
 <body>
-  <div id="app">
-    <button @click="addItem">新增项目</button>
-    <button @click="save">保存</button>
-    <div v-for="(item, idx) in items" style="margin: 20px 0">
-      <label>物品名称：<input v-model="item.name"></label>
-      <div>
-        <label>创建日期：<input v-model="item.createTime"></label>
+  <div id="app" class="container">
+    <h1>食品过期监控</h1>
+    <button class="btn btn-outline-secondary me-2" @click="addItem">新增项目</button>
+    <button class="btn btn-outline-secondary" @click="save">保存</button>
+    <div class="card p-2" v-for="(item, idx) in items" :key="item.name" style="margin: 20px 0">
+      <div class="row container mb-1">
+        <label class="col-sm-2 col-form-label" :for="'item-name'+idx">物品名称：</label>
+        <input :readonly="item.readonly" v-model="item.name" :id="'item-name'+idx" class="col" :class="{'form-control': !item.readonly,'form-control-plaintext': item.readonly}">
       </div>
-      <label>保存期限：<input v-model="item.duration"></label>
-      <div :style="isExpired[idx] ? `color: red;` : ''">过期日期：{{expireTime[idx]}}
-        <span> ({{isExpired[idx] ? '已经' : '还有'}}
+      <div class="row container mb-1">
+        <label class="col-sm-2 col-form-label" :for="'item-createTime'+idx">创建日期：</label>
+        <input :readonly="item.readonly" v-model="item.createTime" :id="'item-createTime'+idx" class="col" :class="{'form-control': !item.readonly,'form-control-plaintext': item.readonly}">
+      </div>
+      <div class="row container mb-1">
+        <label class="col-sm-2 col-form-label" :for="'item-duration'+idx">保存期限：</label>
+        <input :readonly="item.readonly" v-model="item.duration" :id="'item-duration'+idx" class="col" :class="{'form-control': !item.readonly,'form-control-plaintext': item.readonly}">
+      </div>
+      <div class="row container">
+        <span class="col-sm-2 col-form-label">过期日期：</span>
+        <span class="col form-control" :class="{'form-control': !item.readonly,'form-control-plaintext': item.readonly}" :style="isExpired[idx] ? `color: red;` : ''">
+          {{expireTime[idx]}} ({{isExpired[idx] ? '已经' : '还有'}}
           <strong style="font-size: larger;">{{Math.abs((dayjs(expireTime[idx]) - dayjs())/1000/60/60/24).toFixed(1)}}</strong>天)
         </span>
+      </div>
+      <div>
+        <button class="btn btn-sm btn-outline-primary" @click="editItem(idx)">{{item.readonly?'编辑':'确定'}}</button>
+        <button class="btn btn-sm btn-outline-danger ms-2" @click="removeItem(idx)">删除</button>
       </div>
     </div>
   </div>
@@ -46,12 +61,21 @@
         items.value.push({
           name: '',
           createTime: dayjs().format(),
-          duration: 1
+          duration: 1,
+          readonly: false,
         })
       }
 
       const save = () => {
         localStorage.setItem('itemExpireData', JSON.stringify(items.value))
+      }
+
+      const removeItem = (id) => {
+        items.value.splice(id, 1)
+      }
+
+      const editItem = (id) => {
+        items.value[id].readonly = !items.value[id].readonly
       }
 
       (function formatCreateTime() {
@@ -61,6 +85,8 @@
       return {
         items,
         addItem,
+        removeItem,
+        editItem,
         expireTime,
         isExpired,
         save,
