@@ -12,30 +12,30 @@
 
 <body>
   <div id="app" class="container">
-    <h1>食品过期监控</h1>
+    <h1 class="mt-2">食品过期监控</h1>
     <button class="btn btn-outline-secondary me-2" @click="addItem">新增项目</button>
     <button class="btn btn-outline-secondary" @click="save">保存</button>
-    <div class="card p-2" v-for="(item, idx) in items" :key="item.name" style="margin: 20px 0">
+    <div class="card p-2" v-for="(item, idx) in items" :key="idx" style="margin: 20px 0">
       <div class="row container mb-1">
         <label class="col-sm-2 col-form-label" :for="'item-name'+idx">物品名称：</label>
         <input :readonly="item.readonly" v-model="item.name" :id="'item-name'+idx" class="col" :class="{'form-control': !item.readonly,'form-control-plaintext': item.readonly}">
       </div>
       <div class="row container mb-1">
-        <label class="col-sm-2 col-form-label" :for="'item-createTime'+idx">创建日期：</label>
+        <label class="col-sm-2 col-form-label" :for="'item-createTime'+idx">生产日期：</label>
         <input :readonly="item.readonly" v-model="item.createTime" :id="'item-createTime'+idx" class="col" :class="{'form-control': !item.readonly,'form-control-plaintext': item.readonly}">
       </div>
       <div class="row container mb-1">
         <label class="col-sm-2 col-form-label" :for="'item-duration'+idx">保存期限：</label>
-        <input :readonly="item.readonly" v-model="item.duration" :id="'item-duration'+idx" class="col" :class="{'form-control': !item.readonly,'form-control-plaintext': item.readonly}">
+        <input type="number" :readonly="item.readonly" v-model="item.duration" :id="'item-duration'+idx" class="col" :class="{'form-control': !item.readonly,'form-control-plaintext': item.readonly}">
       </div>
-      <div class="row container">
+      <div class="row container mb-1">
         <span class="col-sm-2 col-form-label">过期日期：</span>
         <span class="col form-control" :class="{'form-control': !item.readonly,'form-control-plaintext': item.readonly}" :style="isExpired[idx] ? `color: red;` : ''">
-          {{expireTime[idx]}} ({{isExpired[idx] ? '已经' : '还有'}}
+          {{dayjs(expireTime[idx]).format('YYYY-MM-DD hh:mm')}} ({{isExpired[idx] ? '已经' : '还有'}}
           <strong style="font-size: larger;">{{Math.abs((dayjs(expireTime[idx]) - dayjs())/1000/60/60/24).toFixed(1)}}</strong>天)
         </span>
       </div>
-      <div>
+      <div class="container">
         <button class="btn btn-sm btn-outline-primary" @click="editItem(idx)">{{item.readonly?'编辑':'确定'}}</button>
         <button class="btn btn-sm btn-outline-danger ms-2" @click="removeItem(idx)">删除</button>
       </div>
@@ -66,16 +66,16 @@
         })
       }
 
-      const save = () => {
-        localStorage.setItem('itemExpireData', JSON.stringify(items.value))
-      }
-
       const removeItem = (id) => {
         items.value.splice(id, 1)
       }
-
+      
       const editItem = (id) => {
         items.value[id].readonly = !items.value[id].readonly
+      }
+
+      const save = () => {
+        localStorage.setItem('itemExpireData', JSON.stringify(items.value))
       }
 
       (function formatCreateTime() {
@@ -84,11 +84,11 @@
 
       return {
         items,
+        expireTime,
+        isExpired,
         addItem,
         removeItem,
         editItem,
-        expireTime,
-        isExpired,
         save,
         dayjs
       }
